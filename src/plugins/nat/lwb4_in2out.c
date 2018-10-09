@@ -42,22 +42,18 @@ static u32
 slow_path (lwb4_main_t * dm, lwb4_session_key_t * in2out_key,
 	   lwb4_session_t ** sp, u32 next, u8 * error, u32 thread_index)
 {
-  lwb4_b4_t *b4;
-  clib_bihash_kv_16_8_t b4_kv, b4_value;
+  lwb4_per_thread_data_t *b4 = &dm->per_thread_data[thread_index];
   clib_bihash_kv_24_8_t in2out_kv;
   clib_bihash_kv_8_8_t out2in_kv;
-  dlist_elt_t *head_elt, *oldest_elt, *elt;
+  dlist_elt_t *oldest_elt, *elt;
   u32 oldest_index;
   lwb4_session_t *s;
   snat_session_key_t out2in_key;
-  u32 address_index;
-
+  u32 address_index = 0; /* FIXME: should this be zero? */
+  
+  
   out2in_key.protocol = in2out_key->proto;
   out2in_key.fib_index = 0;
-
-  &dm->per_thread_data[thread_index].nsessions;
-  &dm->per_thread_data[thread_index].addr;
-  &dm->per_thread_data[thread_index].sessions_per_b4_list_head_index;
 
   //TODO configurable quota
   if (b4->nsessions >= 1000)
@@ -89,13 +85,13 @@ slow_path (lwb4_main_t * dm, lwb4_session_key_t * in2out_key,
 
       if (snat_alloc_outside_address_and_port
 	  (dm->addr_pool, 0, thread_index, &out2in_key,
-	   &s->outside_address_index, dm->port_per_thread, thread_index))
+	   dm->port_per_thread, thread_index))
 	ASSERT (0);
     }
   else
     {
       if (snat_alloc_outside_address_and_port
-	  (dm->addr_pool, 0, thread_index, &out2in_key, &address_index,
+	  (dm->addr_pool, 0, thread_index, &out2in_key,
 	   dm->port_per_thread, thread_index))
 	{
 	  *error = LWB4_ERROR_OUT_OF_PORTS;
@@ -203,7 +199,7 @@ done:
 
 static inline uword
 lwb4_in2out_node_fn_inline (vlib_main_t * vm, vlib_node_runtime_t * node,
-			      vlib_frame_t * frame, u8 is_slow_path)
+			    vlib_frame_t * frame, u8 is_slow_path)
 {
   u32 n_left_from, *from, *to_next;
   lwb4_in2out_next_t next_index;

@@ -72,9 +72,13 @@ typedef struct
 typedef struct
 {
   ip6_address_t aftr_ip6_addr;
-  ip4_address_t aftr_ip4_addr;
   ip6_address_t b4_ip6_addr;
   ip4_address_t b4_ip4_addr;
+
+  u16 psid;
+  u8 psid_length;
+  u8 psid_shift;
+  
   snat_address_t snat_addr;
   snat_address_t *addr_pool;
   lwb4_per_thread_data_t *per_thread_data;
@@ -109,7 +113,7 @@ typedef enum
     LWB4_N_ERROR,
 } lwb4_error_t;
 
-extern lwb4_main_t dslite_main;
+extern lwb4_main_t lwb4_main;
 extern vlib_node_registration_t lwb4_in2out_node;
 extern vlib_node_registration_t lwb4_in2out_slowpath_node;
 extern vlib_node_registration_t lwb4_out2in_node;
@@ -119,9 +123,9 @@ extern vlib_node_registration_t lwb4_decap_node;
 void lwb4_init (vlib_main_t * vm);
 int lwb4_set_aftr_ip6_addr (lwb4_main_t * dm, ip6_address_t * addr);
 int lwb4_set_b4_ip6_addr (lwb4_main_t * dm, ip6_address_t * addr);
-int lwb4_set_aftr_ip4_addr (lwb4_main_t * dm, ip4_address_t * addr);
-int lwb4_set_b4_ip4_addr (lwb4_main_t * dm, ip4_address_t * addr);
-/* FIXME: functions for psid, etc */
+int lwb4_set_b4_params (lwb4_main_t * dm, ip6_address_t * ip6_addr,
+			ip4_address_t * ip4_addr, u8 psid_length, u8 psid_shift,
+			u16 psid);
 
 u8 *format_lwb4_trace (u8 * s, va_list * args);
 u8 *format_lwb4_ce_trace (u8 * s, va_list * args);

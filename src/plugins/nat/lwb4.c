@@ -28,8 +28,6 @@ lwb4_init (vlib_main_t * vm)
   lwb4_per_thread_data_t *td;
   u32 translation_buckets = 1024;
   u32 translation_memory_size = 128 << 20;
-  u32 b4_buckets = 128;
-  u32 b4_memory_size = 64 << 20;
 
   dm->first_worker_index = 0;
   dm->num_workers = 0;
@@ -61,8 +59,6 @@ lwb4_init (vlib_main_t * vm)
 
       clib_bihash_init_8_8 (&td->out2in, "out2in", translation_buckets,
                             translation_memory_size);
-
-      clib_bihash_init_16_8 (&td->b4_hash, "b4s", b4_buckets, b4_memory_size);
     }
   /* *INDENT-ON* */
 
@@ -70,18 +66,27 @@ lwb4_init (vlib_main_t * vm)
 }
 
 int
+lwb4_port_in_psid(lwb4_main_t * dm, u16 port)
+{
+  u16 psid_mask = (1 << dm->psid_length) - 1;
+  if (((port >> dm->psid_shift) & psid_mask) == dm->psid)
+    return 1;
+  return 0;
+}
+
+int
 lwb4_set_aftr_ip6_addr (lwb4_main_t * dm, ip6_address_t * addr)
 {
   dpo_id_t dpo = DPO_INVALID;
 
-  lwb4_ce_dpo_create (DPO_PROTO_IP4, 0, &dpo);
+  lwb4_dpo_create (DPO_PROTO_IP4, 0, &dpo);
   fib_prefix_t pfx = {
-    proto = FIB_PROTOCOL_IP4,
-    len = 0,
-    addr.ip4.as_u32 = 0,
+    .fp_proto = FIB_PROTOCOL_IP4,
+    .fp_len = 0,
+    .fp_addr.ip4.as_u32 = 0,
   };
   fib_table_entry_special_dpo_add (0, &pfx, FIB_SOURCE_PLUGIN_HI,
-  	       fib_ENTRY_FLAG_EXCLUSIVE, &dpo);
+  	       FIB_ENTRY_FLAG_EXCLUSIVE, &dpo);
 
   dpo_reset (&dpo);
 
@@ -91,19 +96,14 @@ lwb4_set_aftr_ip6_addr (lwb4_main_t * dm, ip6_address_t * addr)
 }
 
 int
-lwb4_set_aftr_ip4_addr (lwb4_main_t * dm, ip4_address_t * addr)
-{
-  dm->aftr_ip4_addr.as_u32 = addr->as_u32;
-  return 0;
-}
-
-int
 lwb4_set_b4_params (lwb4_main_t * dm, ip6_address_t * ip6_addr,
-                    ip4_address_t * ip4_addr, /* FIXME: psid */)
+                    ip4_address_t * ip4_addr, u8 psid_length, u8 psid_shift,
+		    u16 psid)
 {
   dpo_id_t dpo = DPO_INVALID;
+  snat_address_t *a = &dm->snat_addr;
 
-  lwb4_ce_dpo_create (DPO_PROTO_IP6, 0, &dpo);
+  lwb4_dpo_create (DPO_PROTO_IP6, 0, &dpo);
   fib_prefix_t pfx = {
 	  .fp_proto = FIB_PROTOCOL_IP6,
 	  .fp_len = 128,
@@ -120,11 +120,28 @@ lwb4_set_b4_params (lwb4_main_t * dm, ip6_address_t * ip6_addr,
 
   dm->b4_ip4_addr.as_u32 = ip4_addr->as_u32;
 
-  dm->snat_addr.addr = ip4_addr;
-  dm->snat_addr.fib_index = 0; /* FIXME: ?? */
-  /* FIXME: macrology to set up busy_##n##_ports here */
+  dm->snat_addr.addr = *ip4_addr;
+  a->fib_index = 0; /* FIXME: ?? */
+  
+#define _(N, i, n, s) \
+  clib_bitmap_alloc (a->busy_##n##_port_bitmap, 65535);			\
+  a->busy_##n##_ports = 0;						\
+  vec_validate_init_empty (a->busy_##n##_ports_per_thread, tm->n_vlib_mains - 1, 0); \
+  for (u16 i=0; i<65535; i++) { \
+    if (!lwb4_port_in_psid (dm, i)) { \
+      clib_bitmap_set (a->busy_##n##_port_bitmap, i, 1); \
+      a->busy_##n##_ports++; \
+    } \
+  } \
+  u16 p; \
+  vec_foreach_index(a->busy_##n##_ports_per_thread, p) { \
+    vec_set(a->busy_##n##_port_bitmap, a->busy_##n##_ports); \
+  } \
+  foreach_snat_protocol
+#undef _
+
   dm->addr_pool = 0;
-  vec_add1(dm->addr_pool, dm->snat_addr)
+  vec_add1(dm->addr_pool, dm->snat_addr);
 
   return 0;
 }
