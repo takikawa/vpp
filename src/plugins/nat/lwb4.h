@@ -27,7 +27,7 @@ typedef struct
     struct
     {
       /* FIXME: psid? other fields? */
-      ip6_address_t softwire_id;
+      ip4_address_t softwire_id; /* FIXME: remove? */
       ip4_address_t addr;
       u16 port;
       u8 proto;

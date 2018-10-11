@@ -158,8 +158,6 @@ lwb4_icmp_in2out (lwb4_main_t * dm, ip6_header_t * ip6,
   key.addr = ip4->src_address;
   key.port = echo->identifier;
   key.proto = SNAT_PROTOCOL_ICMP;
-  key.softwire_id.as_u64[0] = ip6->src_address.as_u64[0];
-  key.softwire_id.as_u64[1] = ip6->src_address.as_u64[1];
   key.pad = 0;
   kv.key[0] = key.as_u64[0];
   kv.key[1] = key.as_u64[1];
@@ -252,21 +250,7 @@ lwb4_in2out_node_fn_inline (vlib_main_t * vm, vlib_node_runtime_t * node,
 	  n_left_to_next -= 1;
 
 	  b0 = vlib_get_buffer (vm, bi0);
-	  ip60 = vlib_buffer_get_current (b0);
-
-	  if (PREDICT_FALSE (ip60->protocol != IP_PROTOCOL_IP_IN_IP))
-	    {
-	      if (ip60->protocol == IP_PROTOCOL_ICMP6)
-		{
-		  next0 = LWB4_IN2OUT_NEXT_IP6_ICMP;
-		  goto trace0;
-		}
-	      error0 = LWB4_ERROR_BAD_IP6_PROTOCOL;
-	      next0 = LWB4_IN2OUT_NEXT_DROP;
-	      goto trace0;
-	    }
-
-	  ip40 = vlib_buffer_get_current (b0) + sizeof (ip6_header_t);
+	  ip40 = vlib_buffer_get_current (b0);
 	  proto0 = ip_proto_to_snat_proto (ip40->protocol);
 
 	  if (PREDICT_FALSE (proto0 == ~0))
@@ -286,8 +270,6 @@ lwb4_in2out_node_fn_inline (vlib_main_t * vm, vlib_node_runtime_t * node,
 		  next0 =
 		    lwb4_icmp_in2out (dm, ip60, ip40, &s0, next0, &error0,
 					thread_index);
-		  if (PREDICT_FALSE (next0 == LWB4_IN2OUT_NEXT_DROP))
-		    goto trace0;
 
 		  goto accounting0;
 		}
@@ -304,8 +286,6 @@ lwb4_in2out_node_fn_inline (vlib_main_t * vm, vlib_node_runtime_t * node,
 	  key0.addr = ip40->src_address;
 	  key0.port = udp0->src_port;
 	  key0.proto = proto0;
-	  key0.softwire_id.as_u64[0] = ip60->src_address.as_u64[0];
-	  key0.softwire_id.as_u64[1] = ip60->src_address.as_u64[1];
 	  key0.pad = 0;
 	  kv0.key[0] = key0.as_u64[0];
 	  kv0.key[1] = key0.as_u64[1];
@@ -366,22 +346,32 @@ lwb4_in2out_node_fn_inline (vlib_main_t * vm, vlib_node_runtime_t * node,
 	      udp0->checksum = 0;
 	    }
 
+	  /* Construct IPv6 header */
+	  vlib_buffer_advance (b0, -(sizeof (ip6_header_t)));
+	  ip60 = vlib_buffer_get_current (b0);
+	  ip60->ip_version_traffic_class_and_flow_label =
+	    clib_host_to_net_u32 ((6 << 28) + (ip40->tos << 20));
+	  ip60->payload_length = ip40->length;
+	  ip60->protocol = IP_PROTOCOL_IP_IN_IP;
+	  ip60->hop_limit = ip40->ttl;
+	  ip60->dst_address.as_u64[0] = dm->aftr_ip6_addr.as_u64[0];
+	  ip60->dst_address.as_u64[1] = dm->aftr_ip6_addr.as_u64[1];
+	  ip60->src_address.as_u64[0] = dm->b4_ip6_addr.as_u64[0];
+	  ip60->src_address.as_u64[1] = dm->b4_ip6_addr.as_u64[1];
+
 	accounting0:
 	  /* Accounting */
 	  s0->last_heard = now;
 	  s0->total_pkts++;
 	  s0->total_bytes += vlib_buffer_length_in_chain (vm, b0);
-	  /* Per-B4 LRU list maintenance */
-	  clib_dlist_remove (dm->per_thread_data[thread_index].list_pool,
-			     s0->per_b4_index);
-	  clib_dlist_addtail (dm->per_thread_data[thread_index].list_pool,
-			      s0->per_b4_list_head_index, s0->per_b4_index);
 
+    /*
 	  ip40->tos =
 	    (clib_net_to_host_u32
 	     (ip60->ip_version_traffic_class_and_flow_label) & 0x0ff00000) >>
 	    20;
-	  vlib_buffer_advance (b0, sizeof (ip6_header_t));
+      vlib_buffer_advance (b0, sizeof (ip6_header_t));
+    */
 
 	trace0:
 	  if (PREDICT_FALSE ((node->flags & VLIB_NODE_FLAG_TRACE)
