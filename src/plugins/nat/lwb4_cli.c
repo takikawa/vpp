@@ -39,7 +39,7 @@ lwb4_set_config_fn (vlib_main_t * vm,
 		    unformat_ip6_address, &aftr_ip6_addr,
 		    unformat_ip6_address, &b4_ip6_addr,
 		    unformat_ip4_address, &b4_ip4_addr,
-		    psid_length, psid_shift, psid))
+		    &psid_length, &psid_shift, &psid))
 	;
       else
 	{
@@ -50,7 +50,7 @@ lwb4_set_config_fn (vlib_main_t * vm,
     }
 
   /* FIXME: Look into if the error case can be reached. */
-  rv = lwb4_set_b4_ip6_addr (dm, &aftr_ip6_addr);
+  rv = lwb4_set_aftr_ip6_addr (dm, &aftr_ip6_addr);
   if (rv)
     error =
       clib_error_return (0, "Set LwAFTR IPv6 endpoint address failed.");
