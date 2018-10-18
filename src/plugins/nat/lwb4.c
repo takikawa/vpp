@@ -117,8 +117,11 @@ lwb4_set_b4_params (lwb4_main_t * dm, ip6_address_t * ip6_addr,
 
   dm->b4_ip6_addr.as_u64[0] = ip6_addr->as_u64[0];
   dm->b4_ip6_addr.as_u64[1] = ip6_addr->as_u64[1];
-
   dm->b4_ip4_addr.as_u32 = ip4_addr->as_u32;
+
+  dm->psid = psid;
+  dm->psid_length = psid_length;
+  dm->psid_shift = psid_shift;
 
   dm->snat_addr.addr = *ip4_addr;
   a->fib_index = 0; /* FIXME: ?? */

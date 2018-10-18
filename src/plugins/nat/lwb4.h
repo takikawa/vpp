@@ -76,8 +76,8 @@ typedef struct
   ip4_address_t b4_ip4_addr;
 
   u16 psid;
-  u8 psid_length;
-  u8 psid_shift;
+  u8  psid_length;
+  u8  psid_shift;
   
   snat_address_t snat_addr;
   snat_address_t *addr_pool;

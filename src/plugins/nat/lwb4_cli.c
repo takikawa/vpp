@@ -24,7 +24,7 @@ lwb4_set_config_fn (vlib_main_t * vm,
   unformat_input_t _line_input, *line_input = &_line_input;
   ip6_address_t aftr_ip6_addr, b4_ip6_addr;
   ip4_address_t b4_ip4_addr;
-  u16 psid = 0, psid_length = 0, psid_shift = 0;
+  u32 psid = 0, psid_length = 0, psid_shift = 0;
   int rv;
   clib_error_t *error = 0;
 
@@ -35,7 +35,7 @@ lwb4_set_config_fn (vlib_main_t * vm,
   while (unformat_check_input (line_input) != UNFORMAT_END_OF_INPUT)
     {
       /* TODO: write unformat function for psid_t */
-      if (unformat (line_input, "%U %U %U %d %d %d",
+      if (unformat (line_input, "%U %U %U %u %u %u",
 		    unformat_ip6_address, &aftr_ip6_addr,
 		    unformat_ip6_address, &b4_ip6_addr,
 		    unformat_ip4_address, &b4_ip4_addr,
@@ -75,11 +75,11 @@ lwb4_show_config_fn (vlib_main_t * vm,
 {
   lwb4_main_t *dm = &lwb4_main;
 
-  vlib_cli_output (vm, "AFTR IPv6: %U, B4 IPv6 %U, B4 IPv4 %U, PSID Length: %d, PSID shift %d, PSID %d",
+  vlib_cli_output (vm, "AFTR IPv6: %U, B4 IPv6 %U, B4 IPv4 %U, PSID Length: %u, PSID shift %u, PSID %u",
 		   format_ip6_address, &dm->aftr_ip6_addr,
 		   format_ip6_address, &dm->b4_ip6_addr,
 		   format_ip4_address, &dm->b4_ip4_addr,
-		   &dm->psid_length, &dm->psid_shift, &dm->psid);
+		   dm->psid_length, dm->psid_shift, dm->psid);
   return 0;
 }
 
