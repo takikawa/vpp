@@ -44,25 +44,37 @@ slow_path (lwb4_main_t * dm, lwb4_session_key_t * in2out_key,
   lwb4_per_thread_data_t *b4 = &dm->per_thread_data[thread_index];
   clib_bihash_kv_24_8_t in2out_kv;
   clib_bihash_kv_8_8_t out2in_kv;
-  dlist_elt_t *oldest_elt;
+  dlist_elt_t *head_elt, *oldest_elt, *elt;
   u32 oldest_index;
   lwb4_session_t *s;
   snat_session_key_t out2in_key;
   u32 address_index = 0; /* FIXME: should this be zero? */
-  
-  
+
+
   out2in_key.protocol = in2out_key->proto;
   out2in_key.fib_index = 0;
+
+  /*
+   * Initialize sessions linked list when first accepting sessions
+   */
+  if (b4->nsessions == 0)
+    {
+      pool_get (b4->list_pool, head_elt);
+      b4->sessions_list_head_index =
+        head_elt - dm->per_thread_data[thread_index].list_pool;
+      clib_dlist_init (dm->per_thread_data[thread_index].list_pool,
+                       b4->sessions_list_head_index);
+    }
 
   //TODO configurable quota
   if (b4->nsessions >= 1000)
     {
       oldest_index =
-	clib_dlist_remove_head (dm->per_thread_data[thread_index].list_pool,
-				b4->sessions_per_b4_list_head_index);
+	clib_dlist_remove_head (b4->list_pool,
+				b4->sessions_list_head_index);
       ASSERT (oldest_index != ~0);
       clib_dlist_addtail (dm->per_thread_data[thread_index].list_pool,
-			  b4->sessions_per_b4_list_head_index, oldest_index);
+			  b4->sessions_list_head_index, oldest_index);
       oldest_elt =
 	pool_elt_at_index (dm->per_thread_data[thread_index].list_pool,
 			   oldest_index);
@@ -100,6 +112,16 @@ slow_path (lwb4_main_t * dm, lwb4_session_key_t * in2out_key,
       memset (s, 0, sizeof (*s));
       s->outside_address_index = address_index;
       b4->nsessions++;
+
+      pool_get (dm->per_thread_data[thread_index].list_pool, elt);
+      clib_dlist_init (dm->per_thread_data[thread_index].list_pool,
+                       elt - dm->per_thread_data[thread_index].list_pool);
+      elt->value = s - dm->per_thread_data[thread_index].sessions;
+      s->per_b4_index = elt - dm->per_thread_data[thread_index].list_pool;
+      s->per_b4_list_head_index = b4->sessions_list_head_index;
+      clib_dlist_addtail (dm->per_thread_data[thread_index].list_pool,
+                          s->per_b4_list_head_index,
+                          elt - dm->per_thread_data[thread_index].list_pool);
     }
 
   s->in2out = *in2out_key;
