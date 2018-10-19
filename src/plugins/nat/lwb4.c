@@ -124,21 +124,16 @@ lwb4_set_b4_params (lwb4_main_t * dm, ip6_address_t * ip6_addr,
   dm->psid_length = psid_length;
   dm->psid_shift = psid_shift;
 
+  /* Allocate ports according to lw46/MAP-E mapping */
+  nat_set_alloc_addr_and_port_mape (psid, 16 - psid_length - psid_shift, psid_length);
+
+  /* Initialize busy ports, none are busy */
   dm->snat_addr.addr.as_u32 = ip4_addr->as_u32;
   a->fib_index = 0; /* FIXME: ?? */
-
-  /* Allocate ports according to lw46 mapping */
 #define _(N, i, n, s) \
-  clib_bitmap_alloc (a->busy_##n##_port_bitmap, 65535);	\
+  clib_bitmap_alloc (a->busy_##n##_port_bitmap, 65535); \
   a->busy_##n##_ports = 0; \
-  vec_validate_init_empty (a->busy_##n##_ports_per_thread, tm->n_vlib_mains - 1, 0); \
-  for (u16 idx=0; idx<65535; idx++) { \
-    if (!lwb4_port_in_psid (dm, idx)) { \
-      clib_bitmap_set (a->busy_##n##_port_bitmap, idx, 1); \
-      a->busy_##n##_ports++; \
-    } \
-  } \
-  vec_set(a->busy_##n##_ports_per_thread, a->busy_##n##_ports);
+  vec_validate_init_empty (a->busy_##n##_ports_per_thread, tm->n_vlib_mains - 1, 0);
   foreach_snat_protocol
 #undef _
 
