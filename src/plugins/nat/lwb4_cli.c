@@ -103,22 +103,25 @@ format_lwb4_session (u8 * s, va_list * args)
   return s;
 }
 
-static u8 *
-format_lwb4_b4 (u8 * s, va_list * args)
+static clib_error_t *
+lwb4_show_sessions_command_fn (vlib_main_t * vm,
+				 unformat_input_t * input,
+				 vlib_cli_command_t * cmd)
 {
-  lwb4_per_thread_data_t *td = va_arg (*args, lwb4_per_thread_data_t *);
+  lwb4_main_t *dm = &lwb4_main;
+  lwb4_per_thread_data_t *td = dm->per_thread_data;
+  dlist_elt_t *head, *elt;
   u32 elt_index, head_index;
   u32 session_index;
   lwb4_session_t *session;
 
-  s =
-    format (s, "B4 %U %d sessions\n", format_ip6_address, &td->addr,
-	    td->nsessions);
+  vlib_cli_output (vm, "B4 %U %d sessions\n", format_ip6_address, &td->addr,
+                   td->nsessions);
 
   if (td->nsessions == 0)
-    return s;
+    return 0;
 
-  head_index = td->sessions_per_b4_list_head_index;
+  head_index = td->sessions_list_head_index;
   head = pool_elt_at_index (td->list_pool, head_index);
   elt_index = head->next;
   elt = pool_elt_at_index (td->list_pool, elt_index);
@@ -126,29 +129,11 @@ format_lwb4_b4 (u8 * s, va_list * args)
   while (session_index != ~0)
     {
       session = pool_elt_at_index (td->sessions, session_index);
-      s = format (s, "%U", format_lwb4_session, session);
+      vlib_cli_output (vm, "%U", format_lwb4_session, session);
       elt_index = elt->next;
       elt = pool_elt_at_index (td->list_pool, elt_index);
       session_index = elt->value;
     }
-
-  return s;
-}
-
-static clib_error_t *
-lwb4_show_sessions_command_fn (vlib_main_t * vm,
-				 unformat_input_t * input,
-				 vlib_cli_command_t * cmd)
-{
-  lwb4_main_t *dm = &lwb4_main;
-  lwb4_per_thread_data_t *td;
-
-  /* *INDENT-OFF* */
-  vec_foreach (td, dm->per_thread_data)
-    {
-      vlib_cli_output (vm, "%U", format_lwb4_b4, td);
-    }
-  /* *INDENT-ON* */
 
   return 0;
 }

@@ -59,7 +59,7 @@ typedef struct
 
   /* B4 info */
   ip6_address_t addr;
-  u32 sessions_per_b4_list_head_index;
+  u32 sessions_list_head_index;
   u32 nsessions;
 
   /* Session pool */
