@@ -107,7 +107,6 @@ static u8 *
 format_lwb4_b4 (u8 * s, va_list * args)
 {
   lwb4_per_thread_data_t *td = va_arg (*args, lwb4_per_thread_data_t *);
-  dlist_elt_t *head, *elt;
   u32 elt_index, head_index;
   u32 session_index;
   lwb4_session_t *session;
