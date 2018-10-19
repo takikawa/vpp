@@ -51,14 +51,12 @@ const static dpo_vft_t lwb4_dpo_vft = {
 };
 
 const static char *const lwb4_ip4_nodes[] = {
-  "lwb4-out2in",
-  "lwb4-encap",
+  "lwb4-in2out",
   NULL,
 };
 
 const static char *const lwb4_ip6_nodes[] = {
-  "lwb4-in2out",
-  "lwb4-decap",
+  "lwb4-out2in",
   NULL,
 };
 

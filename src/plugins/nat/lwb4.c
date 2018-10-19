@@ -100,6 +100,7 @@ lwb4_set_b4_params (lwb4_main_t * dm, ip6_address_t * ip6_addr,
                     ip4_address_t * ip4_addr, u8 psid_length, u8 psid_shift,
 		    u16 psid)
 {
+  vlib_thread_main_t *tm = vlib_get_thread_main ();
   dpo_id_t dpo = DPO_INVALID;
   snat_address_t *a = &dm->snat_addr;
 
@@ -123,9 +124,17 @@ lwb4_set_b4_params (lwb4_main_t * dm, ip6_address_t * ip6_addr,
   dm->psid_length = psid_length;
   dm->psid_shift = psid_shift;
 
-  dm->snat_addr.addr = *ip4_addr;
+  dm->snat_addr.addr.as_u32 = ip4_addr->as_u32;
   a->fib_index = 0; /* FIXME: ?? */
-  
+
+#define _(N, i, n, s) \
+      clib_bitmap_alloc (a->busy_##n##_port_bitmap, 65535); \
+      a->busy_##n##_ports = 0; \
+      vec_validate_init_empty (a->busy_##n##_ports_per_thread, tm->n_vlib_mains - 1, 0);
+      foreach_snat_protocol
+#undef _
+
+    /*
 #define _(N, i, n, s) \
   clib_bitmap_alloc (a->busy_##n##_port_bitmap, 65535);			\
   a->busy_##n##_ports = 0;						\
@@ -142,6 +151,7 @@ lwb4_set_b4_params (lwb4_main_t * dm, ip6_address_t * ip6_addr,
   } \
   foreach_snat_protocol
 #undef _
+  */
 
   dm->addr_pool = 0;
   vec_add1(dm->addr_pool, dm->snat_addr);

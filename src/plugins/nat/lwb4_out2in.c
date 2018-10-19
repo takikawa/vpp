@@ -152,7 +152,7 @@ lwb4_out2in_node_fn (vlib_main_t * vm, vlib_node_runtime_t * node,
 	    {
 	      if (ip60->protocol == IP_PROTOCOL_ICMP6)
           {
-            next0 = LWB4_OUT2IN_NEXT_IP6_ICMP;
+            /*next0 = LWB4_OUT2IN_NEXT_IP6_ICMP;*/
             goto trace0;
           }
 	      error0 = LWB4_ERROR_BAD_IP6_PROTOCOL;
@@ -166,7 +166,7 @@ lwb4_out2in_node_fn (vlib_main_t * vm, vlib_node_runtime_t * node,
 	  if (PREDICT_FALSE (proto0 == ~0))
 	    {
 	      error0 = LWB4_ERROR_UNSUPPORTED_PROTOCOL;
-	      next0 = LWB4_CE_DECAP_NEXT_DROP;
+	      /* next0 = LWB4_DECAP_NEXT_DROP; */
 	      goto trace0;
 	    }
 

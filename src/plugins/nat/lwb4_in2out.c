@@ -25,8 +25,7 @@ vlib_node_registration_t lwb4_in2out_slowpath_node;
 
 typedef enum
 {
-  LWB4_IN2OUT_NEXT_IP4_LOOKUP,
-  LWB4_IN2OUT_NEXT_IP6_ICMP,
+  LWB4_IN2OUT_NEXT_IP6_LOOKUP,
   LWB4_IN2OUT_NEXT_DROP,
   LWB4_IN2OUT_NEXT_SLOWPATH,
   LWB4_IN2OUT_N_NEXT,
@@ -45,7 +44,7 @@ slow_path (lwb4_main_t * dm, lwb4_session_key_t * in2out_key,
   lwb4_per_thread_data_t *b4 = &dm->per_thread_data[thread_index];
   clib_bihash_kv_24_8_t in2out_kv;
   clib_bihash_kv_8_8_t out2in_kv;
-  dlist_elt_t *oldest_elt, *elt;
+  dlist_elt_t *oldest_elt;
   u32 oldest_index;
   lwb4_session_t *s;
   snat_session_key_t out2in_key;
@@ -101,16 +100,6 @@ slow_path (lwb4_main_t * dm, lwb4_session_key_t * in2out_key,
       memset (s, 0, sizeof (*s));
       s->outside_address_index = address_index;
       b4->nsessions++;
-
-      pool_get (dm->per_thread_data[thread_index].list_pool, elt);
-      clib_dlist_init (dm->per_thread_data[thread_index].list_pool,
-		       elt - dm->per_thread_data[thread_index].list_pool);
-      elt->value = s - dm->per_thread_data[thread_index].sessions;
-      s->per_b4_index = elt - dm->per_thread_data[thread_index].list_pool;
-      s->per_b4_list_head_index = b4->sessions_per_b4_list_head_index;
-      clib_dlist_addtail (dm->per_thread_data[thread_index].list_pool,
-			  s->per_b4_list_head_index,
-			  elt - dm->per_thread_data[thread_index].list_pool);
     }
 
   s->in2out = *in2out_key;
@@ -227,7 +216,7 @@ lwb4_in2out_node_fn_inline (vlib_main_t * vm, vlib_node_runtime_t * node,
 	{
 	  u32 bi0;
 	  vlib_buffer_t *b0;
-	  u32 next0 = LWB4_IN2OUT_NEXT_IP4_LOOKUP;
+	  u32 next0 = LWB4_IN2OUT_NEXT_IP6_LOOKUP;
 	  ip4_header_t *ip40;
 	  ip6_header_t *ip60;
 	  u8 error0 = LWB4_ERROR_IN2OUT;
@@ -417,8 +406,8 @@ VLIB_REGISTER_NODE (lwb4_in2out_node) = {
   /* edit / add dispositions here */
   .next_nodes = {
     [LWB4_IN2OUT_NEXT_DROP] = "error-drop",
-    [LWB4_IN2OUT_NEXT_IP4_LOOKUP] = "ip4-lookup",
-    [LWB4_IN2OUT_NEXT_IP6_ICMP] = "ip6-icmp-input",
+    [LWB4_IN2OUT_NEXT_IP6_LOOKUP] = "ip6-lookup",
+    /*[LWB4_IN2OUT_NEXT_IP6_ICMP] = "ip6-icmp-input",*/
     [LWB4_IN2OUT_NEXT_SLOWPATH] = "lwb4-in2out-slowpath",
   },
 };
@@ -446,8 +435,8 @@ VLIB_REGISTER_NODE (lwb4_in2out_slowpath_node) = {
   /* edit / add dispositions here */
   .next_nodes = {
     [LWB4_IN2OUT_NEXT_DROP] = "error-drop",
-    [LWB4_IN2OUT_NEXT_IP4_LOOKUP] = "ip4-lookup",
-    [LWB4_IN2OUT_NEXT_IP6_ICMP] = "ip6-lookup",
+    [LWB4_IN2OUT_NEXT_IP6_LOOKUP] = "ip6-lookup",
+    /*[LWB4_IN2OUT_NEXT_IP6_ICMP] = "ip6-lookup", */
     [LWB4_IN2OUT_NEXT_SLOWPATH] = "lwb4-in2out-slowpath",
   },
 };

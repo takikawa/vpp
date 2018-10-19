@@ -43,6 +43,7 @@ add_vpp_plugin(nat
   dslite_ce_decap.c
   lwb4_dpo.c
   lwb4.c
+  lwb4_out2in.c
   lwb4_in2out.c
   lwb4_cli.c
   nat66.c
