@@ -17,7 +17,6 @@
 
 #include <vppinfra/bihash_8_8.h>
 #include <vppinfra/bihash_16_8.h>
-#include <vppinfra/bihash_24_8.h>
 #include <nat/nat.h>
 
 typedef struct
@@ -27,13 +26,12 @@ typedef struct
     struct
     {
       /* FIXME: psid? other fields? */
-      ip4_address_t softwire_id; /* FIXME: remove? */
       ip4_address_t addr;
       u16 port;
       u8 proto;
       u8 pad;
     };
-    u64 as_u64[3];
+    u64 as_u64;
   };
 } lwb4_session_key_t;
 
@@ -55,7 +53,7 @@ typedef struct
 {
   /* Main lookup tables */
   clib_bihash_8_8_t out2in;
-  clib_bihash_24_8_t in2out;
+  clib_bihash_8_8_t in2out;
 
   /* B4 info */
   ip6_address_t addr;

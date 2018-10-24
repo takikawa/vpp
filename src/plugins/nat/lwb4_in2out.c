@@ -42,7 +42,7 @@ slow_path (lwb4_main_t * dm, lwb4_session_key_t * in2out_key,
 	   lwb4_session_t ** sp, u32 next, u8 * error, u32 thread_index)
 {
   lwb4_per_thread_data_t *b4 = &dm->per_thread_data[thread_index];
-  clib_bihash_kv_24_8_t in2out_kv;
+  clib_bihash_kv_8_8_t in2out_kv;
   clib_bihash_kv_8_8_t out2in_kv;
   dlist_elt_t *head_elt, *oldest_elt, *elt;
   u32 oldest_index;
@@ -82,10 +82,8 @@ slow_path (lwb4_main_t * dm, lwb4_session_key_t * in2out_key,
 	pool_elt_at_index (dm->per_thread_data[thread_index].sessions,
 			   oldest_elt->value);
 
-      in2out_kv.key[0] = s->in2out.as_u64[0];
-      in2out_kv.key[1] = s->in2out.as_u64[1];
-      in2out_kv.key[2] = s->in2out.as_u64[2];
-      clib_bihash_add_del_24_8 (&dm->per_thread_data[thread_index].in2out,
+      in2out_kv.key = s->in2out.as_u64;
+      clib_bihash_add_del_8_8 (&dm->per_thread_data[thread_index].in2out,
 				&in2out_kv, 0);
       out2in_kv.key = s->out2in.as_u64;
       clib_bihash_add_del_8_8 (&dm->per_thread_data[thread_index].out2in,
@@ -127,11 +125,9 @@ slow_path (lwb4_main_t * dm, lwb4_session_key_t * in2out_key,
   s->in2out = *in2out_key;
   s->out2in = out2in_key;
   *sp = s;
-  in2out_kv.key[0] = s->in2out.as_u64[0];
-  in2out_kv.key[1] = s->in2out.as_u64[1];
-  in2out_kv.key[2] = s->in2out.as_u64[2];
+  in2out_kv.key = s->in2out.as_u64;
   in2out_kv.value = s - dm->per_thread_data[thread_index].sessions;
-  clib_bihash_add_del_24_8 (&dm->per_thread_data[thread_index].in2out,
+  clib_bihash_add_del_8_8 (&dm->per_thread_data[thread_index].in2out,
 			    &in2out_kv, 1);
   out2in_kv.key = s->out2in.as_u64;
   out2in_kv.value = s - dm->per_thread_data[thread_index].sessions;
@@ -149,7 +145,7 @@ lwb4_icmp_in2out (lwb4_main_t * dm, ip6_header_t * ip6,
 {
   lwb4_session_t *s = 0;
   icmp46_header_t *icmp = ip4_next_header (ip4);
-  clib_bihash_kv_24_8_t kv, value;
+  clib_bihash_kv_8_8_t kv, value;
   lwb4_session_key_t key;
   u32 n = next;
   icmp_echo_header_t *echo;
@@ -170,11 +166,9 @@ lwb4_icmp_in2out (lwb4_main_t * dm, ip6_header_t * ip6,
   key.port = echo->identifier;
   key.proto = SNAT_PROTOCOL_ICMP;
   key.pad = 0;
-  kv.key[0] = key.as_u64[0];
-  kv.key[1] = key.as_u64[1];
-  kv.key[2] = key.as_u64[2];
+  kv.key = key.as_u64;
 
-  if (clib_bihash_search_24_8
+  if (clib_bihash_search_8_8
       (&dm->per_thread_data[thread_index].in2out, &kv, &value))
     {
       n = slow_path (dm, &key, &s, next, error, thread_index);
@@ -244,7 +238,7 @@ lwb4_in2out_node_fn_inline (vlib_main_t * vm, vlib_node_runtime_t * node,
 	  u8 error0 = LWB4_ERROR_IN2OUT;
 	  u32 proto0;
 	  lwb4_session_t *s0 = 0;
-	  clib_bihash_kv_24_8_t kv0, value0;
+	  clib_bihash_kv_8_8_t kv0, value0;
 	  lwb4_session_key_t key0;
 	  udp_header_t *udp0;
 	  tcp_header_t *tcp0;
@@ -298,11 +292,9 @@ lwb4_in2out_node_fn_inline (vlib_main_t * vm, vlib_node_runtime_t * node,
 	  key0.port = udp0->src_port;
 	  key0.proto = proto0;
 	  key0.pad = 0;
-	  kv0.key[0] = key0.as_u64[0];
-	  kv0.key[1] = key0.as_u64[1];
-	  kv0.key[2] = key0.as_u64[2];
+	  kv0.key = key0.as_u64;
 
-	  if (clib_bihash_search_24_8
+	  if (clib_bihash_search_8_8
 	      (&dm->per_thread_data[thread_index].in2out, &kv0, &value0))
 	    {
 	      if (is_slow_path)

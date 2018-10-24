@@ -54,7 +54,7 @@ lwb4_init (vlib_main_t * vm)
   /* *INDENT-OFF* */
   vec_foreach (td, dm->per_thread_data)
     {
-      clib_bihash_init_24_8 (&td->in2out, "in2out", translation_buckets,
+      clib_bihash_init_8_8 (&td->in2out, "in2out", translation_buckets,
                              translation_memory_size);
 
       clib_bihash_init_8_8 (&td->out2in, "out2in", translation_buckets,

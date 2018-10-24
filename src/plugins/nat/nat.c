@@ -2259,10 +2259,10 @@ nat_alloc_addr_and_port_mape (snat_address_t * addresses,
         { \
           while (1) \
             { \
-              if (sm->psid_offset > 0) \
+              if (sm->psid_offset > 1) \
                 A = snat_random_port(1, pow2_mask(sm->psid_offset)); \
               else                                                 \
-                A = 0; \
+                A = sm->psid_offset; \
               j = snat_random_port(0, pow2_mask(m)); \
               portnum = (A << (m + sm->psid_length)) | (sm->psid << m) | j; \
               if (clib_bitmap_get_no_check (a->busy_##n##_port_bitmap, portnum)) \
