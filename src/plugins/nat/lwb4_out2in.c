@@ -122,7 +122,7 @@ lwb4_out2in_node_fn (vlib_main_t * vm, vlib_node_runtime_t * node,
 	{
 	  u32 bi0;
 	  vlib_buffer_t *b0;
-	  u32 next0 = LWB4_OUT2IN_NEXT_IP6_LOOKUP;
+	  u32 next0 = LWB4_OUT2IN_NEXT_IP4_LOOKUP;
 	  u8 error0 = LWB4_ERROR_OUT2IN;
 	  ip4_header_t *ip40;
 	  ip6_header_t *ip60;
