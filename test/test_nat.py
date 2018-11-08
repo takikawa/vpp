@@ -8052,6 +8052,10 @@ class TestLWB4(MethodHolder):
         self.assertEqual(capture[UDP].dport, 20000)
         self.assert_packet_checksums_valid(capture)
 
+        output = self.vapi.cli("show lwb4 sessions")
+        session_str = '{orig_ip4}:{orig_port} out {b4_ip4}:{nat_port} protocol udp'.format(orig_ip4=self.pg0.remote_ip4, orig_port=10000, b4_ip4=self.b4_ip4, nat_port=capture[UDP].sport)
+        self.assertTrue(session_str in output)
+
     def test_out2in(self):
         # first send a packet to get mapping
         p = (Ether(dst=self.pg0.local_mac, src=self.pg0.remote_mac) /
