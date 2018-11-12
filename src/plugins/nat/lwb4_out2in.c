@@ -77,6 +77,7 @@ lwb4_icmp_out2in (lwb4_main_t * dm, ip4_header_t * ip4,
 
   old_id = echo->identifier;
   echo->identifier = new_id = s->in2out.port;
+
   sum = icmp->checksum;
   sum = ip_csum_update (sum, old_id, new_id, icmp_echo_header_t, identifier);
   icmp->checksum = ip_csum_fold (sum);
@@ -174,10 +175,8 @@ lwb4_out2in_node_fn (vlib_main_t * vm, vlib_node_runtime_t * node,
 	    (clib_net_to_host_u32
 	     (ip60->ip_version_traffic_class_and_flow_label) & 0x0ff00000) >>
 	    20;
-	  vlib_buffer_advance (b0, sizeof (ip6_header_t));
+    vlib_buffer_advance (b0, sizeof (ip6_header_t));
 
-    /* FIXME: handle ICMPv6 before decap or ICMPv4 after? */
-    /*
 	  if (PREDICT_FALSE (proto0 == SNAT_PROTOCOL_ICMP))
 	    {
 	      next0 =
@@ -186,9 +185,8 @@ lwb4_out2in_node_fn (vlib_main_t * vm, vlib_node_runtime_t * node,
 	      if (PREDICT_FALSE (next0 == LWB4_OUT2IN_NEXT_DROP))
 		goto trace0;
 
-	      goto encap0;
+        goto accounting0;
 	    }
-    */
 
 	  udp0 = ip4_next_header (ip40);
 	  tcp0 = (tcp_header_t *) udp0;
@@ -245,6 +243,7 @@ lwb4_out2in_node_fn (vlib_main_t * vm, vlib_node_runtime_t * node,
 	      udp0->checksum = 0;
 	    }
 
+	accounting0:
 	  /* Accounting */
 	  s0->last_heard = now;
 	  s0->total_pkts++;

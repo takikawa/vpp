@@ -8085,6 +8085,33 @@ class TestLWB4(MethodHolder):
         self.assertEqual(capture[UDP].dport, 10000)
         self.assert_packet_checksums_valid(capture)
 
+    def test_icmp(self):
+        out = (Ether(dst=self.pg0.local_mac, src=self.pg0.remote_mac) /
+               IP(dst=self.pg1.remote_ip4, src=self.pg0.remote_ip4) /
+               ICMP(id=4000, type="echo-request"))
+        self.pg0.add_stream(out)
+        self.pg_start()
+        # TODO: Maybe we should do this better?
+        sessions = self.vapi.cli("show lwb4 sessions")
+        import re
+        nat_id = int(re.search(":(\d+?) protocol icmp", sessions).group(1))
+
+        p = (Ether(dst=self.pg1.local_mac, src=self.pg1.remote_mac) /
+             IPv6(dst=self.b4_ip6, src=self.aftr_ip6) /
+             IP(dst=self.b4_ip4, src=self.pg1.remote_ip4) /
+             ICMP(id=nat_id, type='echo-reply'))
+        self.pg1.add_stream(p)
+        self.pg_enable_capture(self.pg_interfaces)
+        self.pg_start()
+        capture = self.pg0.get_capture(1)
+        capture = capture[0]
+        self.assertFalse(capture.haslayer(IPv6))
+        self.assertEqual(capture[IP].src, self.pg1.remote_ip4)
+        self.assertEqual(capture[IP].dst, self.pg0.remote_ip4)
+        self.assertEqual(capture[ICMP].id, 4000)
+        self.assert_packet_checksums_valid(capture)
+        out_id = capture[ICMP].id
+
     def tearDown(self):
         super(TestLWB4, self).tearDown()
         if not self.vpp_dead:
