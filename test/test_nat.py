@@ -8090,11 +8090,13 @@ class TestLWB4(MethodHolder):
                IP(dst=self.pg1.remote_ip4, src=self.pg0.remote_ip4) /
                ICMP(id=4000, type="echo-request"))
         self.pg0.add_stream(out)
+        self.pg_enable_capture(self.pg_interfaces)
         self.pg_start()
-        # TODO: Maybe we should do this better?
-        sessions = self.vapi.cli("show lwb4 sessions")
-        import re
-        nat_id = int(re.search(":(\d+?) protocol icmp", sessions).group(1))
+        capture = self.pg1.get_capture(1)
+        capture = capture[0]
+        self.assertTrue(capture.haslayer(IPv6))
+        self.assertTrue(capture.haslayer(ICMP))
+        nat_id = capture[ICMP].id
 
         p = (Ether(dst=self.pg1.local_mac, src=self.pg1.remote_mac) /
              IPv6(dst=self.b4_ip6, src=self.aftr_ip6) /

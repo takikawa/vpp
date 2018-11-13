@@ -276,7 +276,7 @@ lwb4_in2out_node_fn_inline (vlib_main_t * vm, vlib_node_runtime_t * node,
 		    lwb4_icmp_in2out (dm, ip60, ip40, &s0, next0, &error0,
 					thread_index);
 
-		  goto accounting0;
+		  goto encap0;
 		}
 	    }
 	  else
@@ -349,6 +349,7 @@ lwb4_in2out_node_fn_inline (vlib_main_t * vm, vlib_node_runtime_t * node,
 	      udp0->checksum = 0;
 	    }
 
+	encap0:
 	  /* Construct IPv6 header */
 	  vlib_buffer_advance (b0, -(sizeof (ip6_header_t)));
 	  ip60 = vlib_buffer_get_current (b0);
@@ -362,7 +363,6 @@ lwb4_in2out_node_fn_inline (vlib_main_t * vm, vlib_node_runtime_t * node,
 	  ip60->src_address.as_u64[0] = dm->b4_ip6_addr.as_u64[0];
 	  ip60->src_address.as_u64[1] = dm->b4_ip6_addr.as_u64[1];
 
-	accounting0:
 	  /* Accounting */
 	  s0->last_heard = now;
 	  s0->total_pkts++;
