@@ -43,12 +43,6 @@ lwb4_init (vlib_main_t * vm)
 	}
     }
 
-  /* FIXME: modify to fit psid range */
-  if (dm->num_workers)
-    dm->port_per_thread = (0xffff - 1024) / dm->num_workers;
-  else
-    dm->port_per_thread = 0xffff - 1024;
-
   vec_validate (dm->per_thread_data, tm->n_vlib_mains - 1);
 
   /* *INDENT-OFF* */
@@ -129,7 +123,7 @@ lwb4_set_b4_params (lwb4_main_t * dm, ip6_address_t * ip6_addr,
 
   /* Initialize busy ports, none are busy */
   dm->snat_addr.addr.as_u32 = ip4_addr->as_u32;
-  a->fib_index = 0; /* FIXME: ?? */
+  a->fib_index = 0;
 #define _(N, i, n, s) \
   clib_bitmap_alloc (a->busy_##n##_port_bitmap, 65535); \
   a->busy_##n##_ports = 0; \

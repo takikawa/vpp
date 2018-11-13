@@ -30,7 +30,6 @@ format_lwb4_dpo (u8 * s, va_list * args)
   index_t index = va_arg (*args, index_t);
   CLIB_UNUSED (u32 indent) = va_arg (*args, u32);
 
-  /* FIXME: format psid, etc? */
   return (format (s, "lwB4: AFTR:%d", index));
 }
 

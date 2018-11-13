@@ -34,7 +34,6 @@ lwb4_set_config_fn (vlib_main_t * vm,
 
   while (unformat_check_input (line_input) != UNFORMAT_END_OF_INPUT)
     {
-      /* TODO: write unformat function for psid_t */
       if (unformat (line_input, "%U %U %U %u %u %u",
 		    unformat_ip6_address, &aftr_ip6_addr,
 		    unformat_ip6_address, &b4_ip6_addr,
@@ -56,13 +55,11 @@ lwb4_set_config_fn (vlib_main_t * vm,
     error =
       clib_error_return (0, "Set B4 parameters failed.");
 
-  /* FIXME: Look into if the error case can be reached. */
   rv = lwb4_set_aftr_ip6_addr (dm, &aftr_ip6_addr);
   if (rv)
     error =
       clib_error_return (0, "Set LwAFTR IPv6 endpoint address failed.");
 
-  
 done:
   unformat_free (line_input);
 
@@ -144,7 +141,7 @@ lwb4_show_sessions_command_fn (vlib_main_t * vm,
  * @cliexpar
  * @cliexstart{lwb4 set b4-tunnel-endpoint-address}
  * Configures B4
- * vpp# lwb4 set config FIXME
+ * vpp# lwb4 set config fc00::100 fde4:8dba:82e1::1 10.10.1.2 6 10 1
  * @cliexend
 ?*/
 VLIB_CLI_COMMAND (lwb4_set_config, static) = {
@@ -170,7 +167,7 @@ VLIB_CLI_COMMAND (lwb4_show_config, static) = {
 /*?
  * @cliexpar
  * @cliexstart{show lwb4 sessions}
- * Show DS-Lite sessions.
+ * Show LWB4 sessions.
  * vpp# show lwb4 sessions
  * B4 fd01:2::2 1 sessions
  *   in 192.168.1.1:20000 out 10.0.0.3:16253 protocol udp

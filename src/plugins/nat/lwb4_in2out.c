@@ -48,7 +48,7 @@ slow_path (lwb4_main_t * dm, lwb4_session_key_t * in2out_key,
   u32 oldest_index;
   lwb4_session_t *s;
   snat_session_key_t out2in_key;
-  u32 address_index = 0; /* FIXME: should this be zero? */
+  u32 address_index = 0;
 
 
   out2in_key.protocol = in2out_key->proto;
@@ -93,15 +93,13 @@ slow_path (lwb4_main_t * dm, lwb4_session_key_t * in2out_key,
       s->outside_address_index = ~0;
 
       if (snat_alloc_outside_address_and_port
-	  (dm->addr_pool, 0, thread_index, &out2in_key,
-	   dm->port_per_thread, thread_index))
+	  (dm->addr_pool, 0, thread_index, &out2in_key, 0, thread_index))
 	ASSERT (0);
     }
   else
     {
       if (snat_alloc_outside_address_and_port
-	  (dm->addr_pool, 0, thread_index, &out2in_key,
-	   dm->port_per_thread, thread_index))
+	  (dm->addr_pool, 0, thread_index, &out2in_key, 0, thread_index))
 	{
 	  *error = LWB4_ERROR_OUT_OF_PORTS;
 	  return LWB4_IN2OUT_NEXT_DROP;
@@ -137,7 +135,6 @@ slow_path (lwb4_main_t * dm, lwb4_session_key_t * in2out_key,
   return next;
 }
 
-/* FIXME: make sure ICMP handling works correctly */
 static inline u32
 lwb4_icmp_in2out (lwb4_main_t * dm, ip6_header_t * ip6,
 		    ip4_header_t * ip4, lwb4_session_t ** sp, u32 next,
@@ -328,7 +325,6 @@ lwb4_in2out_node_fn_inline (vlib_main_t * vm, vlib_node_runtime_t * node,
 	  if (PREDICT_TRUE (proto0 == SNAT_PROTOCOL_TCP))
 	    {
 	      old_port0 = tcp0->src_port;
-        /* FIXME: need anything for psid? */
 	      tcp0->src_port = s0->out2in.port;
 	      new_port0 = tcp0->src_port;
 
@@ -367,14 +363,6 @@ lwb4_in2out_node_fn_inline (vlib_main_t * vm, vlib_node_runtime_t * node,
 	  s0->last_heard = now;
 	  s0->total_pkts++;
 	  s0->total_bytes += vlib_buffer_length_in_chain (vm, b0);
-
-    /*
-	  ip40->tos =
-	    (clib_net_to_host_u32
-	     (ip60->ip_version_traffic_class_and_flow_label) & 0x0ff00000) >>
-	    20;
-      vlib_buffer_advance (b0, sizeof (ip6_header_t));
-    */
 
 	trace0:
 	  if (PREDICT_FALSE ((node->flags & VLIB_NODE_FLAG_TRACE)
@@ -421,6 +409,7 @@ VLIB_REGISTER_NODE (lwb4_in2out_node) = {
   .next_nodes = {
     [LWB4_IN2OUT_NEXT_DROP] = "error-drop",
     [LWB4_IN2OUT_NEXT_IP6_LOOKUP] = "ip6-lookup",
+    /* FIXME: ICMPv6 handling */
     /*[LWB4_IN2OUT_NEXT_IP6_ICMP] = "ip6-icmp-input",*/
     [LWB4_IN2OUT_NEXT_SLOWPATH] = "lwb4-in2out-slowpath",
   },

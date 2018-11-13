@@ -16,7 +16,6 @@
 #define __included_lwb4_h__
 
 #include <vppinfra/bihash_8_8.h>
-#include <vppinfra/bihash_16_8.h>
 #include <nat/nat.h>
 
 typedef struct
@@ -25,7 +24,6 @@ typedef struct
   {
     struct
     {
-      /* FIXME: psid? other fields? */
       ip4_address_t addr;
       u16 port;
       u8 proto;
@@ -76,13 +74,12 @@ typedef struct
   u16 psid;
   u8  psid_length;
   u8  psid_shift;
-  
+
   snat_address_t snat_addr;
   snat_address_t *addr_pool;
   lwb4_per_thread_data_t *per_thread_data;
   u32 num_workers;
   u32 first_worker_index;
-  u16 port_per_thread;
 } lwb4_main_t;
 
 typedef struct
@@ -91,11 +88,9 @@ typedef struct
   u32 session_index;
 } lwb4_trace_t;
 
-#define foreach_lwb4_error                    \
-_(IN2OUT, "valid in2out lwB4 packets")       \
-_(OUT2IN, "valid out2in lwB4 packets")       \
-_(CE_ENCAP, "valid CE encap lwB4 packets")   \
-_(CE_DECAP, "valid CE decap lwB4 packets")   \
+#define foreach_lwb4_error                      \
+_(IN2OUT, "valid in2out lwB4 packets")          \
+_(OUT2IN, "valid out2in lwB4 packets")          \
 _(NO_TRANSLATION, "no translation")             \
 _(BAD_IP6_PROTOCOL, "bad ip6 protocol")         \
 _(OUT_OF_PORTS, "out of ports")                 \
@@ -115,20 +110,16 @@ extern lwb4_main_t lwb4_main;
 extern vlib_node_registration_t lwb4_in2out_node;
 extern vlib_node_registration_t lwb4_in2out_slowpath_node;
 extern vlib_node_registration_t lwb4_out2in_node;
-extern vlib_node_registration_t lwb4_encap_node;
-extern vlib_node_registration_t lwb4_decap_node;
 
 void lwb4_init (vlib_main_t * vm);
 int lwb4_set_aftr_ip6_addr (lwb4_main_t * dm, ip6_address_t * addr);
-int lwb4_set_b4_ip6_addr (lwb4_main_t * dm, ip6_address_t * addr);
 int lwb4_set_b4_params (lwb4_main_t * dm, ip6_address_t * ip6_addr,
 			ip4_address_t * ip4_addr, u8 psid_length, u8 psid_shift,
 			u16 psid);
 
 u8 *format_lwb4_trace (u8 * s, va_list * args);
-u8 *format_lwb4_ce_trace (u8 * s, va_list * args);
 
-#endif /* __included_dslite_h__ */
+#endif /* __included_lwb4_h__ */
 
 /*
  * fd.io coding-style-patch-verification: ON

@@ -153,6 +153,7 @@ lwb4_out2in_node_fn (vlib_main_t * vm, vlib_node_runtime_t * node,
 	    {
 	      if (ip60->protocol == IP_PROTOCOL_ICMP6)
           {
+            /* FIXME: ICMPv6 handling */
             /*next0 = LWB4_OUT2IN_NEXT_IP6_ICMP;*/
             goto trace0;
           }
