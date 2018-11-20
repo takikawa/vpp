@@ -21,6 +21,7 @@ typedef enum
 {
   LWB4_OUT2IN_NEXT_IP4_LOOKUP,
   LWB4_OUT2IN_NEXT_IP6_LOOKUP,
+  LWB4_OUT2IN_NEXT_IP6_ICMP_RELAY,
   LWB4_OUT2IN_NEXT_DROP,
   LWB4_OUT2IN_N_NEXT,
 } lwb4_out2in_next_t;
@@ -153,8 +154,8 @@ lwb4_out2in_node_fn (vlib_main_t * vm, vlib_node_runtime_t * node,
 	    {
 	      if (ip60->protocol == IP_PROTOCOL_ICMP6)
           {
-            /* FIXME: ICMPv6 handling */
-            /*next0 = LWB4_OUT2IN_NEXT_IP6_ICMP;*/
+            /* pass packet onto ICMP relay node in MAP */
+            next0 = LWB4_OUT2IN_NEXT_IP6_ICMP_RELAY;
             goto trace0;
           }
 	      error0 = LWB4_ERROR_BAD_IP6_PROTOCOL;
@@ -289,6 +290,7 @@ VLIB_REGISTER_NODE (lwb4_out2in_node) = {
     [LWB4_OUT2IN_NEXT_DROP] = "error-drop",
     [LWB4_OUT2IN_NEXT_IP4_LOOKUP] = "ip4-lookup",
     [LWB4_OUT2IN_NEXT_IP6_LOOKUP] = "ip6-lookup",
+    [LWB4_OUT2IN_NEXT_IP6_ICMP_RELAY] = "ip6-map-icmp-relay",
   },
 };
 /* *INDENT-ON* */

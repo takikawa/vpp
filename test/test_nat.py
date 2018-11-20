@@ -8114,6 +8114,22 @@ class TestLWB4(MethodHolder):
         self.assert_packet_checksums_valid(capture)
         out_id = capture[ICMP].id
 
+    def test_icmpv6(self):
+        out = (Ether(dst=self.pg1.local_mac, src=self.pg1.remote_mac) /
+               IPv6(dst=self.b4_ip6, src=self.aftr_ip6) /
+               ICMPv6DestUnreach(code=1) /
+               IPv6(dst=self.aftr_ip6, src=self.b4_ip6) /
+               IP(dst=self.pg1.remote_ip4, src=self.pg0.remote_ip4) /
+               # FIXME: should this work even without a UDP payload here?
+               UDP())
+        self.pg1.add_stream(out)
+        self.pg_enable_capture(self.pg_interfaces)
+        self.pg_start()
+        capture = self.pg0.get_capture(1)
+        capture = capture[0]
+        self.assertTrue(capture.haslayer(IP))
+        self.assertTrue(capture[IP].dst == self.pg0.remote_ip4)
+
     def tearDown(self):
         super(TestLWB4, self).tearDown()
         if not self.vpp_dead:
