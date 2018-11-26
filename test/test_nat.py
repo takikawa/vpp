@@ -8135,6 +8135,19 @@ class TestLwB4(MethodHolder):
         self.assertTrue(capture.haslayer(IP))
         self.assertTrue(capture[IP].dst == self.pg0.remote_ip4)
 
+    def test_icmpv6_drop(self):
+        # non-AFTR src IP should cause a drop
+        out = (Ether(dst=self.pg1.local_mac, src=self.pg1.remote_mac) /
+               IPv6(dst=self.b4_ip6, src="2001:4860:4860::8888") /
+               ICMPv6DestUnreach(code=1) /
+               IPv6(dst=self.aftr_ip6, src=self.b4_ip6) /
+               IP(dst=self.pg1.remote_ip4, src=self.pg0.remote_ip4) /
+               UDP())
+        self.pg1.add_stream(out)
+        self.pg_enable_capture(self.pg_interfaces)
+        self.pg_start()
+        capture = self.pg0.assert_nothing_captured()
+
     def tearDown(self):
         super(TestLwB4, self).tearDown()
         if not self.vpp_dead:

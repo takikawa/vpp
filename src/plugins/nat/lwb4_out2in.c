@@ -154,12 +154,24 @@ lwb4_out2in_node_fn (vlib_main_t * vm, vlib_node_runtime_t * node,
 	    {
 	      if (ip60->protocol == IP_PROTOCOL_ICMP6)
           {
-            /* pass packet onto ICMP relay node in MAP */
-            next0 = LWB4_OUT2IN_NEXT_IP6_ICMP_RELAY;
-            goto trace0;
+            /* Validate source address as RFC7596 5.1 states
+             * pass packet onto ICMP relay node in MAP if ok */
+            if (ip6_address_is_equal(&ip60->src_address,
+                                     &dm->aftr_ip6_addr))
+              {
+                next0 = LWB4_OUT2IN_NEXT_IP6_ICMP_RELAY;
+              }
+            else
+              {
+                error0 = LWB4_ERROR_BAD_ICMP_SRC;
+                next0 = LWB4_OUT2IN_NEXT_DROP;
+              }
           }
-	      error0 = LWB4_ERROR_BAD_IP6_PROTOCOL;
-	      next0 = LWB4_OUT2IN_NEXT_DROP;
+        else
+          {
+            error0 = LWB4_ERROR_BAD_IP6_PROTOCOL;
+            next0 = LWB4_OUT2IN_NEXT_DROP;
+          }
 	      goto trace0;
 	    }
 

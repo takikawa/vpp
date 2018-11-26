@@ -96,6 +96,7 @@ _(BAD_IP6_PROTOCOL, "bad ip6 protocol")         \
 _(OUT_OF_PORTS, "out of ports")                 \
 _(UNSUPPORTED_PROTOCOL, "unsupported protocol") \
 _(BAD_ICMP_TYPE, "unsupported icmp type")       \
+_(BAD_ICMP_SRC, "wrong src address on icmp")    \
 _(UNKNOWN, "unknown")
 
 typedef enum
