@@ -7992,12 +7992,12 @@ class TestDSliteCE(MethodHolder):
             self.logger.info(
                 self.vapi.cli("show dslite b4-tunnel-endpoint-address"))
 
-class TestLWB4(MethodHolder):
+class TestLwB4(MethodHolder):
     """ LwB4 Test Cases """
 
     @classmethod
     def setUpClass(cls):
-        super(TestLWB4, cls).setUpClass()
+        super(TestLwB4, cls).setUpClass()
 
         cls.b4_ip4 = '192.0.0.2'
         b4_ip4_n = socket.inet_pton(socket.AF_INET, cls.b4_ip4)
@@ -8025,7 +8025,7 @@ class TestLWB4(MethodHolder):
             cls.vapi.lwb4_set_aftr_addr(aftr_ip6_n)
 
         except Exception:
-            super(TestLWB4, cls).tearDownClass()
+            super(TestLwB4, cls).tearDownClass()
             raise
 
     def assertPSIDRange(self, port):
@@ -8053,7 +8053,12 @@ class TestLWB4(MethodHolder):
         self.assert_packet_checksums_valid(capture)
 
         output = self.vapi.cli("show lwb4 sessions")
-        session_str = '{orig_ip4}:{orig_port} out {b4_ip4}:{nat_port} protocol udp'.format(orig_ip4=self.pg0.remote_ip4, orig_port=10000, b4_ip4=self.b4_ip4, nat_port=capture[UDP].sport)
+        session_str = '{orig_ip4}:{orig_port} out {b4_ip4}:{nat_port} protocol udp'.format(
+            orig_ip4=self.pg0.remote_ip4,
+            orig_port=10000,
+            b4_ip4=self.b4_ip4,
+            nat_port=capture[UDP].sport
+        )
         self.assertTrue(session_str in output)
 
     def test_out2in(self):
@@ -8131,7 +8136,7 @@ class TestLWB4(MethodHolder):
         self.assertTrue(capture[IP].dst == self.pg0.remote_ip4)
 
     def tearDown(self):
-        super(TestLWB4, self).tearDown()
+        super(TestLwB4, self).tearDown()
         if not self.vpp_dead:
             self.logger.info(self.vapi.cli("show lwb4 config"))
             self.logger.info(self.vapi.cli("show lwb4 sessions"))

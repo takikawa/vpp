@@ -25,7 +25,6 @@ lwb4_set_config_fn (vlib_main_t * vm,
   ip6_address_t aftr_ip6_addr, b4_ip6_addr;
   ip4_address_t b4_ip4_addr;
   u32 psid = 0, psid_length = 0, psid_shift = 0;
-  int rv;
   clib_error_t *error = 0;
 
   /* Get a line of input. */
@@ -49,16 +48,9 @@ lwb4_set_config_fn (vlib_main_t * vm,
     }
 
 
-  rv = lwb4_set_b4_params(dm, &b4_ip6_addr, &b4_ip4_addr,
-			  psid_length, psid_shift, psid);
-  if (rv)
-    error =
-      clib_error_return (0, "Set B4 parameters failed.");
-
-  rv = lwb4_set_aftr_ip6_addr (dm, &aftr_ip6_addr);
-  if (rv)
-    error =
-      clib_error_return (0, "Set LwAFTR IPv6 endpoint address failed.");
+  lwb4_set_b4_params(dm, &b4_ip6_addr, &b4_ip4_addr,
+                     psid_length, psid_shift, psid);
+  lwb4_set_aftr_ip6_addr (dm, &aftr_ip6_addr);
 
 done:
   unformat_free (line_input);
@@ -73,7 +65,7 @@ lwb4_show_config_fn (vlib_main_t * vm,
 {
   lwb4_main_t *dm = &lwb4_main;
 
-  vlib_cli_output (vm, "AFTR IPv6: %U, B4 IPv6 %U, B4 IPv4 %U, PSID Length: %u, PSID shift %u, PSID %u",
+  vlib_cli_output (vm, "AFTR IPv6: %U, B4 IPv6: %U, B4 IPv4: %U, PSID Length: %u, PSID shift: %u, PSID: %u",
 		   format_ip6_address, &dm->aftr_ip6_addr,
 		   format_ip6_address, &dm->b4_ip6_addr,
 		   format_ip4_address, &dm->b4_ip4_addr,
@@ -139,7 +131,7 @@ lwb4_show_sessions_command_fn (vlib_main_t * vm,
 
 /*?
  * @cliexpar
- * @cliexstart{lwb4 set b4-tunnel-endpoint-address}
+ * @cliexstart{lwb4 set config}
  * Configures B4
  * vpp# lwb4 set config fc00::100 fde4:8dba:82e1::1 10.10.1.2 6 10 1
  * @cliexend
@@ -152,7 +144,7 @@ VLIB_CLI_COMMAND (lwb4_set_config, static) = {
 
 /*?
  * @cliexpar
- * @cliexstart{show lwb4 b4-tunnel-endpoint-address}
+ * @cliexstart{show lwb4 config}
  * Show current configuration
  * vpp# show lwb4 config
  * 2001:db8:62aa::375e:f4c1:1
